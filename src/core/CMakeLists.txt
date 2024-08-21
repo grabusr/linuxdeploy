@@ -28,19 +28,22 @@ if(NOT CImg_FOUND)
     find_package(CImg REQUIRED)
 endif()
 
-message(STATUS "Generating excludelist")
-execute_process(
-    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/generate-excludelist.sh
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/excludelist.h
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generate-excludelist.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating excludelist file"
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/generate-excludelist.sh
+        VERBATIM
 )
 
 add_subdirectory(copyright)
 
-add_library(linuxdeploy_core STATIC elf_file.cpp appdir.cpp ${HEADERS} appdir_root_setup.cpp)
+add_library(linuxdeploy_core STATIC elf_file.cpp appdir.cpp ${HEADERS} ${CMAKE_CURRENT_BINARY_DIR}/excludelist.h appdir_root_setup.cpp)
 target_link_libraries(linuxdeploy_core PUBLIC
     linuxdeploy_plugin linuxdeploy_log linuxdeploy_util linuxdeploy_desktopfile_static
     CImg ${CMAKE_THREAD_LIBS_INIT}
 )
 target_link_libraries(linuxdeploy_core PUBLIC linuxdeploy_core_copyright)
-target_include_directories(linuxdeploy_core PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(linuxdeploy_core PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(linuxdeploy_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
